@@ -115,15 +115,18 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
   <div><div class="kicker">Your presence is the best gift</div><h2>Will you join us?</h2><p class="lead" style="margin:0">Save your spot for Downtown Wali Diwali 2K26. RSVP takes just a moment.</p>
    <p style="font-size:14px;line-height:2;color:#6b3c48;margin-top:24px">🗓 Thursday, 5 November 2026<br>🕗 8 PM onwards<br>🎙 Sufi Night by Dilnoor &amp; Band<br>🎧 DJ · Food · Cold Drinks</p>
   </div>
-  <div class="form-card"><form id="rsvpForm">
-   <label>Your name<input type="text" id="name" placeholder="Enter your name" autocomplete="name" required></label>
-   <label>Number of guests<input type="number" id="guests" min="1" max="20" value="1" required></label>
+  <div class="form-card"><form id="rsvpForm" name="rsvp" method="POST" action="/" data-netlify="true" netlify-honeypot="bot-field">
+   <input type="hidden" name="form-name" value="rsvp">
+   <input type="hidden" name="event" value="Downtown Wali Diwali 2K26">
+   <p hidden><label>Leave this field empty<input name="bot-field" autocomplete="off"></label></p>
+   <label>Your name<input type="text" id="name" name="name" placeholder="Enter your name" autocomplete="name" required></label>
+   <label>Number of guests<input type="number" id="guests" name="guests" min="1" max="20" value="1" required></label>
    <div><label>Your RSVP</label><div class="radio-list">
     <label class="radio-option"><input type="radio" name="attendance" value="Yes, I'm in!" required> Yes, I'm in! 🎉</label>
     <label class="radio-option"><input type="radio" name="attendance" value="Maybe, I'll confirm"> Maybe, I'll confirm</label>
     <label class="radio-option"><input type="radio" name="attendance" value="Sorry, can't make it"> Sorry, can't make it</label>
    </div></div>
-   <label>Note for the hosts (optional)<textarea id="note" placeholder="Add a note..."></textarea></label>
+   <label>Note for the hosts (optional)<textarea id="note" name="note" placeholder="Add a note..."></textarea></label>
    <button class="btn submit" id="submitBtn" type="submit">Submit my RSVP →</button><div class="status" id="status" aria-live="polite"></div>
    <div class="smallprint">Your RSVP will be saved to the Downtown guest list.</div>
   </form></div>
@@ -132,24 +135,23 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 </main>
 <footer><div class="wrap"><span>✦ Downtown Bhangra</span><span>Downtown Wali Diwali 2K26</span><a href="#top" style="color:inherit">Back to top ↑</a></div></footer>
 <script>
-// Paste your deployed Google Apps Script Web App URL between the quotes below.
-const RSVP_ENDPOINT = 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE';
-
 document.getElementById('rsvpForm').addEventListener('submit', async function(e){
  e.preventDefault();
  const name=document.getElementById('name').value.trim();
- const guests=Number(document.getElementById('guests').value);
  const attendance=document.querySelector('input[name="attendance"]:checked');
- const note=document.getElementById('note').value.trim();
  const status=document.getElementById('status');
  const button=document.getElementById('submitBtn');
  if(!name||!attendance){status.textContent='Please enter your name and choose an RSVP option.';return;}
- if(RSVP_ENDPOINT.startsWith('PASTE_')){status.textContent='The RSVP form is not connected yet. Please contact the event host.';return;}
- const payload={name,guests,attendance:attendance.value,note,event:'Downtown Wali Diwali 2K26'};
+ if(button.disabled){return;}
+ if(!this.reportValidity()){return;}
  button.disabled=true; button.textContent='Submitting…'; status.textContent='Saving your RSVP…';
  try {
-   // Apps Script accepts this simple request without a CORS preflight.
-   await fetch(RSVP_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+   const response=await fetch(this.action,{
+     method:'POST',
+     headers:{'Content-Type':'application/x-www-form-urlencoded'},
+     body:new URLSearchParams(new FormData(this)).toString()
+   });
+   if(!response.ok){throw new Error('RSVP submission failed');}
    status.textContent='Thank you! Your RSVP has been sent.';
    document.getElementById('rsvpForm').reset();
    document.getElementById('guests').value=1;
